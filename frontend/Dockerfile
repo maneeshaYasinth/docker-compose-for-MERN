@@ -1,20 +1,26 @@
-#use the base image for node
-FROM node:23.10.0
+# ---------- Build Stage ----------
+FROM node:20-alpine AS build
 
-#Set the working directory inside the container
 WORKDIR /app
 
-#copy the package.json and package-lock.json files to the working directory
+# Copy and install dependencies
 COPY package*.json ./
-
-#install the dependencies
 RUN npm install
 
-#copy the rest of the application code to the working directory
+# Copy rest of the source code
 COPY . .
 
-#Expose the port that the application will run on
-EXPOSE 5173
+# Build the optimized Vite production build
+RUN npm run build
 
-#Start the application
-CMD ["npm","run","dev"]
+# ---------- Serve Stage ----------
+FROM nginx:alpine
+
+# Copy built frontend files to Nginx's default public folder
+COPY --from=build /app/dist /usr/share/nginx/html
+
+# Expose port 80 for public access
+EXPOSE 80
+
+# Run Nginx
+CMD ["nginx", "-g", "daemon off;"]
