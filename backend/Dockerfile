@@ -1,20 +1,20 @@
-# Use the base image for node
+# Use a lightweight Node.js image
 FROM node:20-alpine
-
-# Install nodemon globally
-RUN npm install -g nodemon
 
 # Set the working directory inside the container
 WORKDIR /app
 
-#copy all files to the working directory
+# Copy only package files first (for better caching)
+COPY package*.json ./
+
+# Install only production dependencies
+RUN npm install --only=production
+
+# Copy all backend code
 COPY . .
 
-# Install the dependencies
-RUN npm install
-
-# Expose the port that the application will run on
+# Expose backend port
 EXPOSE 5000
 
-# Start the application
-CMD ["npm","run","dev"]
+# Start the app (make sure package.json has "start": "node server.js" or similar)
+CMD ["npm", "start"]
